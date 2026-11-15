@@ -81,14 +81,28 @@ export interface PlannedInspectionRun {
   findingsCount: number;
 }
 
+export type BulletinCategory =
+  | 'Riesgo Mecánico'
+  | 'Riesgo Eléctrico'
+  | 'Riesgo Químico'
+  | 'Trabajo en Alturas'
+  | 'Emergencias'
+  | 'Locativo y Ergonomía';
+
 export interface SafetyBulletinItem {
   id: string;
   title: string;
+  category: BulletinCategory;
   urgency: 'ALTA PRIORIDAD' | 'PREVENTIVO' | 'INFORMATIVO';
   targetAudience: string;
   publishedAt: string;
+  author: string;
+  summary: string;
+  legalBasis: string;
+  requiredControls: string[];
   readsCount: number;
   totalAudience: number;
+  acknowledgedByCarnets: string[];
   content: string[];
 }
 

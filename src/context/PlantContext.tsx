@@ -5,6 +5,7 @@ import {
   PlantQuadrant, 
   PlannedInspectionRun, 
   SafetyBulletinItem,
+  BulletinCategory,
   PlantUserProfile
 } from '../types/plantOps';
 import { 
@@ -41,7 +42,18 @@ interface PlantContextType {
     status: NonNullable<PlantIncidentReport['workOrder']>['status'],
     authorizedBy?: string
   ) => void;
-  recordBulletinRead: (bulletinId: string) => void;
+  recordBulletinRead: (bulletinId: string, carnet?: string) => void;
+  createBulletin: (data: {
+    title: string;
+    category: BulletinCategory;
+    urgency: SafetyBulletinItem['urgency'];
+    targetAudience: string;
+    summary: string;
+    legalBasis: string;
+    requiredControls: string[];
+    totalAudience: number;
+    content: string[];
+  }) => SafetyBulletinItem;
   completeInspection: (inspectionId: string, score: number, findings: number) => void;
 }
 
@@ -193,13 +205,59 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }));
   };
 
-  const recordBulletinRead = (bulletinId: string) => {
+  const recordBulletinRead = (bulletinId: string, carnet?: string) => {
+    const badge = carnet || currentUser?.carnet || '883921';
     setBulletins(prev => prev.map(b => {
-      if (b.id === bulletinId && b.readsCount < b.totalAudience) {
-        return { ...b, readsCount: b.readsCount + 1 };
+      if (b.id === bulletinId) {
+        if (b.acknowledgedByCarnets.includes(badge)) {
+          return b;
+        }
+        return {
+          ...b,
+          readsCount: Math.min(b.totalAudience, b.readsCount + 1),
+          acknowledgedByCarnets: [...b.acknowledgedByCarnets, badge]
+        };
       }
       return b;
     }));
+  };
+
+  const createBulletin = (data: {
+    title: string;
+    category: BulletinCategory;
+    urgency: SafetyBulletinItem['urgency'];
+    targetAudience: string;
+    summary: string;
+    legalBasis: string;
+    requiredControls: string[];
+    totalAudience: number;
+    content: string[];
+  }): SafetyBulletinItem => {
+    const nextNum = 49 + bulletins.length - 4;
+    const padded = String(Math.max(49, nextNum)).padStart(3, '0');
+    const authorLabel = currentUser
+      ? `${currentUser.name} · ${currentUser.roleLabel}`
+      : 'Carlos Mario Vélez · Especialista SST';
+
+    const newBulletin: SafetyBulletinItem = {
+      id: `BOL-2026-${padded}`,
+      title: data.title.trim(),
+      category: data.category,
+      urgency: data.urgency,
+      targetAudience: data.targetAudience.trim(),
+      publishedAt: getSystemTimestamp(),
+      author: authorLabel,
+      summary: data.summary.trim(),
+      legalBasis: data.legalBasis.trim() || 'Decreto 1072 de 2015 · Resolución 0312 de 2019',
+      requiredControls: data.requiredControls.filter(Boolean),
+      readsCount: 1,
+      totalAudience: Math.max(1, data.totalAudience || 60),
+      acknowledgedByCarnets: currentUser?.carnet ? [currentUser.carnet] : [],
+      content: data.content.map(c => c.trim()).filter(Boolean)
+    };
+
+    setBulletins(prev => [newBulletin, ...prev]);
+    return newBulletin;
   };
 
   const completeInspection = (inspectionId: string, score: number, findings: number) => {
@@ -235,6 +293,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       assignEPPToWorker,
       updateWorkOrderStatus,
       recordBulletinRead,
+      createBulletin,
       completeInspection
     }}>
       {children}

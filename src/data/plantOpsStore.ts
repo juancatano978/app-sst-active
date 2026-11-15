@@ -249,29 +249,89 @@ export const INITIAL_INSPECTIONS: PlannedInspectionRun[] = [
 export const INITIAL_BULLETINS: SafetyBulletinItem[] = [
   {
     id: 'BOL-2026-048',
-    title: 'Protocolo Obligatorio de Manos Libres en Prensas y Troqueladoras',
+    title: 'Protocolo Obligatorio de Manos Libres y Bloqueo LOTO en Prensas y Troqueladoras',
+    category: 'Riesgo Mecánico',
     urgency: 'ALTA PRIORIDAD',
-    targetAudience: 'Cuadrilla Mecánica, Troquelado y Prensas (Clase V)',
+    targetAudience: 'Cuadrilla Mecánica, Troquelado y Prensas — Sector A (Clase V)',
     publishedAt: '2026-10-28 07:00',
+    author: 'Carlos Mario Vélez · Especialista SST',
+    summary:
+      'Emitido tras detectar guarda desprendida en Prensa #2 y falla intermitente en cortina óptica de plegadora. Ningún operario debe acercar las extremidades al punto de atrapamiento con energía residual conectada.',
+    legalBasis: 'Res. 2400/1979 Art. 267 · ISO 12100 · OSHA 1910.147 (LOTO)',
+    requiredControls: ['Candado Personal LOTO', 'Pinzas Extractoras 40 cm', 'Guantes Anticorte Nivel 5', 'Prueba de Cortina Óptica'],
     readsCount: 104,
     totalAudience: 120,
+    acknowledgedByCarnets: ['401120'],
     content: [
-      'Bloqueo LOTO obligatorio antes de ajustar matrices o desatorar piezas metálicas.',
-      'Si la cortina óptica parpadea o pierde calibración, detenga la faena y notifique de inmediato en el Tótem.',
-      'Uso imperativo de pinzas extractoras de 40 cm para cualquier alimentación en matriz abierta.'
+      'Aplique aislamiento de energía (candado + tarjeta LOTO) en el seccionador principal antes de ajustar matrices, limpiar viruta o retirar piezas trabadas.',
+      'Verifique al inicio de cada turno el tiempo de respuesta de la cortina óptica con la varilla de prueba; si parpadea o falla, detenga el equipo y reporte en el Tótem.',
+      'Está estrictamente prohibido introducir manos o dedos en matriz abierta: utilice únicamente pinzas extractoras de aluminio de 40 cm.',
+      'No opere equipos cuyas guardas físicas estén sueltas o cuyos micro-switches de enclavamiento presenten puentes eléctricos.'
     ]
   },
   {
     id: 'BOL-2026-047',
-    title: 'Disposición y Rotulado de Solventes Inflamables en Sector D',
+    title: 'Control Electrostático y Rotulado SGA de Solventes Inflamables en Sector D',
+    category: 'Riesgo Químico',
     urgency: 'PREVENTIVO',
-    targetAudience: 'Almacén Químico y Pinturas',
-    publishedAt: '2026-10-24 08:30',
+    targetAudience: 'Almacén Químico, Dosificación y Pinturas — Sector D',
+    publishedAt: '2026-10-26 08:30',
+    author: 'Carlos Mario Vélez · Especialista SST',
+    summary:
+      'Recordatorio operativo previo al trasvase mensual de thinner, tolueno y resinas epóxicas. La acumulación de carga estática durante el trasiego sin pinza a tierra es la principal fuente de ignición en cuartos químicos.',
+    legalBasis: 'Decreto 1496/2018 (SGA) · NFPA 30 · Res. 2400/1979 Cap. X',
+    requiredControls: ['Pinza de Puesta a Tierra', 'Respirador Vapores Orgánicos', 'Gafas Antisalpicaduras', 'Kit Antiderrames'],
     readsCount: 88,
     totalAudience: 95,
+    acknowledgedByCarnets: ['401120', '502310'],
     content: [
-      'Mantener los bidones conectados a cable de descarga electrostática a tierra.',
-      'Respetar compatibilidad química según la matriz SGA en las estanterías antiexplosión.'
+      'Conecte obligatoriamente la pinza equipotencial y el cable de descarga electrostática a tierra antes de abrir válvulas o trasvasar tambores metálicos de 55 galones.',
+      'Todo envase secundario fraccionado debe portar etiqueta SGA legible con pictogramas de peligro, palabra de advertencia y ficha FDS disponible en el atril del sector.',
+      'Respete la matriz de incompatibilidad química: nunca almacene oxidantes o ácidos fuertes junto a solventes inflamables en las estanterías antiexplosión.',
+      'Verifique que los extractores de aire permanezcan encendidos durante toda la jornada de mezcla y mantenga el kit antiderrames despejado.'
+    ]
+  },
+  {
+    id: 'BOL-2026-046',
+    title: 'Inspección Pre-Uso de Arnés y Bloqueo por Certificación Vencida (Res. 4272/2021)',
+    category: 'Trabajo en Alturas',
+    urgency: 'ALTA PRIORIDAD',
+    targetAudience: 'Mantenimiento Locativo, Montajes y Almacén EPP — Sectores A, B y E',
+    publishedAt: '2026-10-24 06:15',
+    author: 'Diego Alejandro Pineda · Almacenista Técnico EPP',
+    summary:
+      'Se recuerda al personal de montaje y mantenimiento que todo trabajo igual o superior a 2.0 metros requiere permiso firmado y reentrenamiento anual vigente. El pañol bloqueará automáticamente el despacho si la certificación supera 365 días.',
+    legalBasis: 'Resolución 4272 de 2021 · ANSI/ASSP Z359.11',
+    requiredControls: ['Arnés Dieléctrico 4 Argollas', 'Eslinga con Absorbedor', 'Casco con Barbuquejo 3 Puntos', 'Certificado Vigente'],
+    readsCount: 54,
+    totalAudience: 60,
+    acknowledgedByCarnets: ['502310', '883921'],
+    content: [
+      'Inspeccione visualmente reatas, costuras de contraste, argollas en D y paquete absorbedor de choque antes de recibir o colgarse del equipo.',
+      'Si el testigo de impacto del absorbedor está rasgado o el arnés presenta quemaduras de soldadura o pintura química, retírelo de inmediato para baja en pañol.',
+      'Valide la vigencia de su certificado de Trabajo Seguro en Alturas en el Tótem o con el almacenista antes de solicitar permiso de trabajo en cubiertas o puentes grúa.',
+      'El barbuquejo de tres puntos debe permanecer abrochado en todo momento durante labores en escaleras, plataformas elevadoras o andamios certificados.'
+    ]
+  },
+  {
+    id: 'BOL-2026-045',
+    title: 'Distancias de Seguridad por Arco Eléctrico y Despeje en Subestación T-04 (440V)',
+    category: 'Riesgo Eléctrico',
+    urgency: 'INFORMATIVO',
+    targetAudience: 'Cuadrilla Eléctrica, Hornos y Supervisores de Turno',
+    publishedAt: '2026-10-21 10:00',
+    author: 'Dra. Valeria Aristizábal / Coordinación HSEQ',
+    summary:
+      'Lineamientos preventivos para maniobras de restablecimiento de breakers y limpieza alrededor de tableros de fuerza de 440V tras hallazgos detectados en inspección locativa.',
+    legalBasis: 'RETIE Art. 13 · NFPA 70E · NTC 2050',
+    requiredControls: ['Tapete Dieléctrico Certificado', 'Guantes Dieléctricos Clase 00', 'Careta Arco Eléctrico', 'Candado LOTO Eléctrico'],
+    readsCount: 41,
+    totalAudience: 50,
+    acknowledgedByCarnets: ['401120', '100001'],
+    content: [
+      'Mantenga un despeje frontal mínimo de 1.0 metro libre de estibas, canecas o herramientas frente a todos los tableros de distribución eléctrica.',
+      'Verifique que el tapete dieléctrico permanezca centrado y limpio frente al gabinete y reporte de inmediato cualquier puerta sin seguro o sin tapa acrílica cubre-bornes.',
+      'Solo personal electricista con matrícula CONTE/CONALTEL vigente y EPP ignífugo categoría 2 puede abrir puertas de tableros energizados a 440V.'
     ]
   }
 ];
