@@ -1,0 +1,251 @@
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { 
+  PlantIncidentReport, 
+  WorkerEPPProfile, 
+  PlantQuadrant, 
+  PlannedInspectionRun, 
+  SafetyBulletinItem,
+  PlantUserProfile
+} from '../types/plantOps';
+import { 
+  INITIAL_QUADRANTS, 
+  INITIAL_INCIDENTS, 
+  INITIAL_WORKERS, 
+  INITIAL_INSPECTIONS, 
+  INITIAL_BULLETINS,
+  PLANT_USERS,
+  SMMLV_PARAM
+} from '../data/plantOpsStore';
+import { getSystemTimestamp, getSystemDateOnly } from '../utils/dateUtils';
+
+interface PlantContextType {
+  currentUser: PlantUserProfile | null;
+  availableUsers: PlantUserProfile[];
+  loginWithCarnet: (carnetInput: string) => { success: boolean; user?: PlantUserProfile; error?: string };
+  logout: () => void;
+  quadrants: PlantQuadrant[];
+  incidents: PlantIncidentReport[];
+  workers: WorkerEPPProfile[];
+  inspections: PlannedInspectionRun[];
+  bulletins: SafetyBulletinItem[];
+  selectedIncidentId: string;
+  setSelectedIncidentId: (id: string) => void;
+  createIncident: (data: Partial<PlantIncidentReport>) => PlantIncidentReport;
+  updateGtc45Evaluation: (
+    incidentId: string, 
+    evaluation: NonNullable<PlantIncidentReport['gtc45Evaluation']>
+  ) => void;
+  assignEPPToWorker: (workerId: string, gearItem: { name: string; serial: string }) => boolean;
+  updateWorkOrderStatus: (
+    incidentId: string, 
+    status: NonNullable<PlantIncidentReport['workOrder']>['status'],
+    authorizedBy?: string
+  ) => void;
+  recordBulletinRead: (bulletinId: string) => void;
+  completeInspection: (inspectionId: string, score: number, findings: number) => void;
+}
+
+const PlantContext = createContext<PlantContextType | undefined>(undefined);
+
+export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<PlantUserProfile | null>(null);
+  const [quadrants, setQuadrants] = useState<PlantQuadrant[]>(INITIAL_QUADRANTS);
+  const [incidents, setIncidents] = useState<PlantIncidentReport[]>(INITIAL_INCIDENTS);
+  const [workers, setWorkers] = useState<WorkerEPPProfile[]>(INITIAL_WORKERS);
+  const [inspections, setInspections] = useState<PlannedInspectionRun[]>(INITIAL_INSPECTIONS);
+  const [bulletins, setBulletins] = useState<SafetyBulletinItem[]>(INITIAL_BULLETINS);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string>('RAD-2026-088192');
+
+  const loginWithCarnet = (carnetInput: string) => {
+    const cleaned = carnetInput.trim().replace(/^#/, '').replace(/\./g, '');
+    if (!cleaned) {
+      return { success: false, error: 'Ingrese o aproxime un número de carné válido.' };
+    }
+    const found = PLANT_USERS.find(
+      u => u.carnet === cleaned || u.cedula.replace(/\./g, '') === cleaned
+    );
+    if (!found) {
+      return {
+        success: false,
+        error: `El carné "${carnetInput.trim()}" no se encuentra habilitado en el directorio activo de planta.`
+      };
+    }
+    setCurrentUser(found);
+    return { success: true, user: found };
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+  };
+
+  const createIncident = (data: Partial<PlantIncidentReport>): PlantIncidentReport => {
+    const id = `RAD-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const formattedDate = getSystemTimestamp();
+
+    const newIncident: PlantIncidentReport = {
+      id,
+      title: data.title || 'Condición de riesgo en línea',
+      category: data.category || 'Locativo',
+      quadrantId: data.quadrantId || 'Q-A1',
+      quadrantName: data.quadrantName || 'Nave Prensas y Troquelado',
+      area: data.area || 'Sector A',
+      supervisor: data.supervisor || 'Carlos Mario Vélez',
+      reportedBy: data.reportedBy || 'Operario de Turno',
+      reportedAt: formattedDate,
+      status: 'Reportado',
+      description: data.description || '',
+      isAnonymous: data.isAnonymous || false
+    };
+
+    setIncidents(prev => [newIncident, ...prev]);
+    setSelectedIncidentId(id);
+
+    // Update active hazard count for that quadrant
+    setQuadrants(prev => prev.map(q => {
+      if (q.id === newIncident.quadrantId) {
+        return { ...q, activeHazards: q.activeHazards + 1 };
+      }
+      return q;
+    }));
+
+    return newIncident;
+  };
+
+  const updateGtc45Evaluation = (
+    incidentId: string, 
+    evaluation: NonNullable<PlantIncidentReport['gtc45Evaluation']>
+  ) => {
+    setIncidents(prev => prev.map(inc => {
+      if (inc.id === incidentId) {
+        const isSuspension = Boolean(evaluation.suspensionOrder);
+        const newStatus = isSuspension ? 'Suspendido' : 'En Triaje';
+        return {
+          ...inc,
+          status: newStatus,
+          gtc45Evaluation: evaluation
+        };
+      }
+      return inc;
+    }));
+
+    // If critical condition, mark quadrant
+    if (evaluation.nr >= 600) {
+      setQuadrants(prev => prev.map(q => {
+        const targetInc = incidents.find(i => i.id === incidentId);
+        if (targetInc && q.id === targetInc.quadrantId) {
+          return { ...q, criticalConditions: q.criticalConditions + 1 };
+        }
+        return q;
+      }));
+    }
+  };
+
+  const assignEPPToWorker = (workerId: string, gearItem: { name: string; serial: string }): boolean => {
+    const worker = workers.find(w => w.id === workerId);
+    if (!worker || worker.certStatus === 'VENCIDO') {
+      return false;
+    }
+
+    const assignedAt = getSystemDateOnly();
+    const inspectionDue = '2027-01-28'; // Próxima inspección trimestral
+
+    const newGear = {
+      id: `G-${Date.now()}`,
+      name: gearItem.name,
+      serial: gearItem.serial,
+      assignedAt,
+      inspectionDue
+    };
+
+    setWorkers(prev => prev.map(w => {
+      if (w.id === workerId) {
+        return {
+          ...w,
+          assignedGear: [newGear, ...w.assignedGear]
+        };
+      }
+      return w;
+    }));
+
+    return true;
+  };
+
+  const updateWorkOrderStatus = (
+    incidentId: string, 
+    status: NonNullable<PlantIncidentReport['workOrder']>['status'],
+    authorizedBy?: string
+  ) => {
+    const dateStr = getSystemDateOnly();
+
+    setIncidents(prev => prev.map(inc => {
+      if (inc.id === incidentId && inc.workOrder) {
+        return {
+          ...inc,
+          workOrder: {
+            ...inc.workOrder,
+            status,
+            authorizedBy: authorizedBy || inc.workOrder.authorizedBy,
+            authorizedAt: dateStr
+          }
+        };
+      }
+      return inc;
+    }));
+  };
+
+  const recordBulletinRead = (bulletinId: string) => {
+    setBulletins(prev => prev.map(b => {
+      if (b.id === bulletinId && b.readsCount < b.totalAudience) {
+        return { ...b, readsCount: b.readsCount + 1 };
+      }
+      return b;
+    }));
+  };
+
+  const completeInspection = (inspectionId: string, score: number, findings: number) => {
+    setInspections(prev => prev.map(ins => {
+      if (ins.id === inspectionId) {
+        return {
+          ...ins,
+          status: 'Completada',
+          score,
+          findingsCount: findings,
+          actaPdfUrl: `ACTA-${ins.id}.pdf`
+        };
+      }
+      return ins;
+    }));
+  };
+
+  return (
+    <PlantContext.Provider value={{
+      currentUser,
+      availableUsers: PLANT_USERS,
+      loginWithCarnet,
+      logout,
+      quadrants,
+      incidents,
+      workers,
+      inspections,
+      bulletins,
+      selectedIncidentId,
+      setSelectedIncidentId,
+      createIncident,
+      updateGtc45Evaluation,
+      assignEPPToWorker,
+      updateWorkOrderStatus,
+      recordBulletinRead,
+      completeInspection
+    }}>
+      {children}
+    </PlantContext.Provider>
+  );
+};
+
+export const usePlant = () => {
+  const context = useContext(PlantContext);
+  if (!context) {
+    throw new Error('usePlant must be used within a PlantProvider');
+  }
+  return context;
+};

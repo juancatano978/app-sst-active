@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  /* Tipografía Oficial - Manual de Marca SST-Active */
+  --font-display: "Montserrat", "Arial Black", Arial, sans-serif;
+  --font-sans: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Paleta Primaria */
+  --color-brand-navy: #0A2342;
+  --color-brand-steel: #1F6FB5;
+  --color-brand-orange: #FF8A00;
+  --color-brand-green: #2ECC71;
+
+  /* Colores de Apoyo */
+  --color-brand-deep: #14508F;
+  --color-brand-sky: #5FA8E8;
+  --color-brand-graphite: #2B3036;
+  --color-brand-silver: #C9D1D9;
+  --color-brand-red: #E63946;
+}
+
+@layer base {
+  html, body {
+    font-family: var(--font-sans);
+    background-color: #061529;
+    color: #FFFFFF;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "SST-Active | Plataforma de Seguridad y Salud en el Trabajo Industrial",
+  "description": "Sistema integral de gestión de seguridad, prevención de riesgos locativos, triaje GTC 45, inspecciones planeadas, control de EPP y cumplimiento legal para sectores industriales de alto riesgo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
