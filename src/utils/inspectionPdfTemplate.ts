@@ -57,7 +57,7 @@ const sanitizePdfText = (text: string): string => {
  */
 const loadBrandLogoPng = async (): Promise<string | null> => {
   try {
-    const response = await fetch('/assets/aistudio/sst-active-logo_678efcf8.svg');
+    const response = await fetch(`${import.meta.env.BASE_URL}assets/aistudio/sst-active-logo_678efcf8.svg`);
     if (!response.ok) return null;
     const svgText = await response.text();
     const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });

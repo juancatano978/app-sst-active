@@ -34,7 +34,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <div className={`inline-flex items-center gap-3 select-none ${className}`}>
       <div className={`bg-white border border-[#C9D1D9]/40 flex items-center justify-center shrink-0 ${padClass}`}>
         <img
-          src="/assets/aistudio/sst-active-logo_678efcf8.svg"
+          src={`${import.meta.env.BASE_URL}assets/aistudio/sst-active-logo_678efcf8.svg`}
           alt="SST-Active — Prevención Digital e Inteligencia Laboral Industrial"
           className={`${heightClass} w-auto object-contain block`}
         />
