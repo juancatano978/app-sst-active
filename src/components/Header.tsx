@@ -41,10 +41,10 @@ export const Header: React.FC<HeaderProps> = ({
   const unreadCount = supervisorNotifications.filter(n => !n.read).length;
 
   const navItems: { id: ModuleId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'dashboard', label: 'Panel General', icon: LayoutDashboard },
-    { id: 'totem', label: 'Tótem de Planta', icon: Monitor },
+    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard },
+    { id: 'totem', label: 'Tótem', icon: Monitor },
     { id: 'triaje', label: 'Triaje GTC 45', icon: Tablet },
-    { id: 'alturas', label: 'Control de Alturas', icon: HardHat },
+    { id: 'alturas', label: 'Alturas', icon: HardHat },
     { id: 'inspecciones', label: 'Inspecciones', icon: ClipboardCheck },
     { id: 'presupuesto', label: 'Presupuesto', icon: Banknote }
   ];
@@ -60,21 +60,18 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-[#0A2342]/95 backdrop-blur-md border-b border-[#14508F]/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 h-20">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-3 h-20 min-w-0">
           {/* Zone 1: Official Brand Logo */}
           <div
             onClick={() => onSelectModule('dashboard')}
-            className="flex items-center gap-3 shrink-0 cursor-pointer"
+            className="flex items-center shrink-0 cursor-pointer"
           >
             <BrandLogo size="sm" />
-            <span className="hidden xl:inline-block text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#14508F]/50 text-[#C9D1D9] border border-[#1F6FB5]/40">
-              {currentUser?.roleLabel || 'Planta Industrial'}
-            </span>
           </div>
 
-          {/* Zone 2: Role-Filtered Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-[#C9D1D9]">
+          {/* Zone 2: Compact Role-Filtered Navigation Links (wide screens only; full tab bar is right below) */}
+          <nav className="hidden xl:flex items-center gap-3.5 text-xs font-medium text-[#C9D1D9] min-w-0">
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeModule === item.id;
@@ -89,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
                       : 'border-transparent hover:text-white hover:border-[#1F6FB5]'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#FF8A00]' : 'text-[#5FA8E8]'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FF8A00]' : 'text-[#5FA8E8]'}`} />
                   <span>{item.label}</span>
                 </button>
               );
@@ -97,13 +94,13 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Zone 3: Supervisor Notifications Bell, User Badge, Primary Action & Logout */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {isSupervisor && (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setNotifMenuOpen(prev => !prev)}
-                  className={`relative p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                  className={`relative p-2 rounded-xl border transition-colors cursor-pointer ${
                     unreadCount > 0
                       ? 'bg-[#FF8A00]/15 border-[#FF8A00] text-[#FF8A00]'
                       : 'bg-[#061529] border-[#14508F]/70 text-[#C9D1D9] hover:text-white'
@@ -193,14 +190,14 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {currentUser && (
-              <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#061529] border border-[#14508F]/70 text-xs">
+              <div className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#061529] border border-[#14508F]/70 text-xs max-w-[190px]">
                 <CreditCard className="w-4 h-4 text-[#5FA8E8] shrink-0" />
-                <div className="leading-tight">
-                  <div className="font-bold text-white truncate max-w-[155px]">
+                <div className="leading-tight min-w-0">
+                  <div className="font-bold text-white truncate">
                     {currentUser.name}
                   </div>
-                  <div className="text-[10px] font-mono text-[#C9D1D9]">
-                    Carné #{currentUser.carnet} · {currentUser.roleLabel}
+                  <div className="text-[10px] font-mono text-[#C9D1D9] truncate">
+                    #{currentUser.carnet} · {currentUser.roleLabel}
                   </div>
                 </div>
               </div>
@@ -210,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectModule('totem')}
-                className="hidden md:flex px-4 py-2 text-xs font-display font-extrabold text-[#0A2342] bg-[#FF8A00] hover:bg-[#ff9c24] rounded-lg shadow-md transition-all items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer uppercase tracking-wide"
+                className="hidden sm:flex px-3 py-2 text-xs font-display font-extrabold text-[#0A2342] bg-[#FF8A00] hover:bg-[#ff9c24] rounded-lg shadow-md transition-all items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer uppercase tracking-wide"
               >
                 <Monitor className="w-3.5 h-3.5" />
                 <span>Abrir Tótem</span>
@@ -221,10 +218,11 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={logout}
               title="Cerrar sesión y cambiar carné"
-              className="px-3 py-2 text-xs font-semibold text-[#C9D1D9] hover:text-white bg-[#061529] hover:bg-[#14508F]/40 border border-[#14508F]/70 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-2.5 sm:px-3 py-2 text-xs font-semibold text-[#C9D1D9] hover:text-white bg-[#061529] hover:bg-[#14508F]/40 border border-[#14508F]/70 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5 text-[#FF8A00]" />
-              <span>Cambiar Carné</span>
+              <span className="hidden sm:inline">Cambiar Carné</span>
+              <span className="sm:hidden">Salir</span>
             </button>
           </div>
         </div>
