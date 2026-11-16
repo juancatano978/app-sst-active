@@ -27,11 +27,22 @@ import {
   Megaphone, 
   Banknote,
   LayoutDashboard,
-  ArrowLeft
+  ArrowLeft,
+  BellRing,
+  ArrowRight,
+  CheckCheck,
+  X,
+  EyeOff
 } from 'lucide-react';
 
 function AppContent() {
-  const { currentUser } = usePlant();
+  const {
+    currentUser,
+    supervisorNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    setSelectedIncidentId
+  } = usePlant();
   const [activeModule, setActiveModule] = useState<string>('dashboard');
 
   useEffect(() => {
@@ -47,6 +58,10 @@ function AppContent() {
   }
 
   const allowed = currentUser.allowedModules;
+  const isSupervisor = currentUser.role === 'SUPERVISOR_HSEQ';
+  const unreadSupervisorNotifications = isSupervisor
+    ? supervisorNotifications.filter(n => !n.read)
+    : [];
 
   const moduleMeta: Record<string, {
     title: string;
@@ -167,6 +182,95 @@ function AppContent() {
             })}
           </div>
         </div>
+
+        {/* Supervisor Login Notification Banner for New Totem Reports */}
+        {isSupervisor && unreadSupervisorNotifications.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#0A2342] border-2 border-[#FF8A00] shadow-2xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#14508F]/60 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FF8A00] text-[#0A2342] flex items-center justify-center shrink-0">
+                  <BellRing className="w-5 h-5 animate-bounce" />
+                </div>
+                <div>
+                  <div className="text-xs font-mono font-bold text-[#FF8A00] uppercase tracking-wider">
+                    Notificación de Ingreso · Alerta en Tiempo Real del Tótem
+                  </div>
+                  <div className="text-sm sm:text-base font-display font-bold text-white">
+                    Tienes {unreadSupervisorNotifications.length} nuevo(s) reporte(s) de riesgo pendiente(s) por revisar
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={markAllNotificationsRead}
+                className="px-3 py-1.5 rounded-lg bg-[#061529] hover:bg-[#14508F]/50 border border-[#14508F]/70 text-xs text-[#C9D1D9] hover:text-white font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <CheckCheck className="w-3.5 h-3.5 text-[#2ECC71]" />
+                <span>Marcar todas leídas</span>
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {unreadSupervisorNotifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  className="p-3.5 rounded-xl bg-[#061529] border border-[#1F6FB5]/70 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                >
+                  <div className="space-y-1 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-[#E63946] text-white font-mono text-[10px] font-bold">
+                        NUEVO REPORTE
+                      </span>
+                      <span className="font-mono font-bold text-[#FF8A00]">{notif.incidentId}</span>
+                      <span className="text-[#5FA8E8] font-semibold">{notif.category}</span>
+                      <span className="text-[#C9D1D9]">· {notif.quadrantName} ({notif.area})</span>
+                      <span className="font-mono text-[#C9D1D9]/80">· {notif.reportedAt}</span>
+                    </div>
+                    <div className="text-sm font-display font-bold text-white">{notif.title}</div>
+                    {notif.description && (
+                      <div className="text-xs text-[#C9D1D9] line-clamp-2">"{notif.description}"</div>
+                    )}
+                    <div className="text-[11px] text-[#5FA8E8] flex items-center gap-1.5">
+                      {notif.isAnonymous ? (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5" />
+                          <span>Reportado vía Buzón Confidencial (Anónimo)</span>
+                        </>
+                      ) : (
+                        <span>Reportado por: {notif.reportedBy}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedIncidentId(notif.incidentId);
+                        markNotificationRead(notif.id);
+                        setActiveModule('triaje');
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-[#FF8A00] hover:bg-[#ff9c24] text-[#0A2342] font-display font-extrabold text-xs flex items-center gap-1.5 shadow cursor-pointer transition-colors"
+                    >
+                      <span>Evaluar en Triaje GTC 45</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => markNotificationRead(notif.id)}
+                      title="Descartar notificación"
+                      className="p-2 rounded-xl bg-[#0A2342] hover:bg-[#14508F]/60 border border-[#14508F]/70 text-[#C9D1D9] hover:text-white cursor-pointer transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Module Subtitle */}
         {safeActiveModule !== 'dashboard' && currentMeta && (

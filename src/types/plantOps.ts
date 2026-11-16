@@ -135,3 +135,18 @@ export interface PlantUserProfile {
   allowedModules: ModuleId[];
 }
 
+export interface SupervisorNotification {
+  id: string;
+  incidentId: string;
+  title: string;
+  description: string;
+  category: PlantIncidentReport['category'];
+  quadrantName: string;
+  area: string;
+  reportedBy: string;
+  reportedAt: string;
+  isAnonymous: boolean;
+  read: boolean;
+}
+
+

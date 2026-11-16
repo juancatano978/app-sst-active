@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   PlantIncidentReport, 
   WorkerEPPProfile, 
@@ -6,7 +6,8 @@ import {
   PlannedInspectionRun, 
   SafetyBulletinItem,
   BulletinCategory,
-  PlantUserProfile
+  PlantUserProfile,
+  SupervisorNotification
 } from '../types/plantOps';
 import { 
   INITIAL_QUADRANTS, 
@@ -55,18 +56,60 @@ interface PlantContextType {
     content: string[];
   }) => SafetyBulletinItem;
   completeInspection: (inspectionId: string, score: number, findings: number) => void;
+  supervisorNotifications: SupervisorNotification[];
+  markNotificationRead: (notificationId: string) => void;
+  markAllNotificationsRead: () => void;
 }
 
 const PlantContext = createContext<PlantContextType | undefined>(undefined);
 
+const NOTIF_STORAGE_KEY = 'sst_active_supervisor_notifications_v1';
+const INCIDENTS_STORAGE_KEY = 'sst_active_totem_incidents_v1';
+
+const loadStoredNotifications = (): SupervisorNotification[] => {
+  try {
+    const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SupervisorNotification[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const loadStoredIncidents = (): PlantIncidentReport[] => {
+  try {
+    const raw = localStorage.getItem(INCIDENTS_STORAGE_KEY);
+    if (!raw) return INITIAL_INCIDENTS;
+    const custom = JSON.parse(raw) as PlantIncidentReport[];
+    const existingIds = new Set(INITIAL_INCIDENTS.map(i => i.id));
+    const uniqueCustom = custom.filter(c => !existingIds.has(c.id));
+    return [...uniqueCustom, ...INITIAL_INCIDENTS];
+  } catch {
+    return INITIAL_INCIDENTS;
+  }
+};
+
 export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<PlantUserProfile | null>(null);
   const [quadrants, setQuadrants] = useState<PlantQuadrant[]>(INITIAL_QUADRANTS);
-  const [incidents, setIncidents] = useState<PlantIncidentReport[]>(INITIAL_INCIDENTS);
+  const [incidents, setIncidents] = useState<PlantIncidentReport[]>(loadStoredIncidents);
   const [workers, setWorkers] = useState<WorkerEPPProfile[]>(INITIAL_WORKERS);
   const [inspections, setInspections] = useState<PlannedInspectionRun[]>(INITIAL_INSPECTIONS);
   const [bulletins, setBulletins] = useState<SafetyBulletinItem[]>(INITIAL_BULLETINS);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string>('RAD-2026-088192');
+  const [supervisorNotifications, setSupervisorNotifications] = useState<SupervisorNotification[]>(loadStoredNotifications);
+
+  useEffect(() => {
+    const handleStorageSync = (e: StorageEvent) => {
+      if (e.key === NOTIF_STORAGE_KEY) {
+        setSupervisorNotifications(loadStoredNotifications());
+      }
+      if (e.key === INCIDENTS_STORAGE_KEY) {
+        setIncidents(loadStoredIncidents());
+      }
+    };
+    window.addEventListener('storage', handleStorageSync);
+    return () => window.removeEventListener('storage', handleStorageSync);
+  }, []);
 
   const loginWithCarnet = (carnetInput: string) => {
     const cleaned = carnetInput.trim().replace(/^#/, '').replace(/\./g, '');
@@ -109,8 +152,43 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       isAnonymous: data.isAnonymous || false
     };
 
-    setIncidents(prev => [newIncident, ...prev]);
+    setIncidents(prev => {
+      const updated = [newIncident, ...prev];
+      try {
+        const initialIds = new Set(INITIAL_INCIDENTS.map(i => i.id));
+        const onlyCustom = updated.filter(i => !initialIds.has(i.id));
+        localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(onlyCustom));
+      } catch {
+        // ignore storage quota errors
+      }
+      return updated;
+    });
     setSelectedIncidentId(id);
+
+    // Emitir notificación inmediata para el Supervisor HSEQ cuando ingrese
+    const newNotification: SupervisorNotification = {
+      id: `NOTIF-${Date.now()}`,
+      incidentId: newIncident.id,
+      title: newIncident.title,
+      description: newIncident.description,
+      category: newIncident.category,
+      quadrantName: newIncident.quadrantName,
+      area: newIncident.area,
+      reportedBy: newIncident.reportedBy,
+      reportedAt: newIncident.reportedAt,
+      isAnonymous: Boolean(newIncident.isAnonymous),
+      read: false
+    };
+
+    setSupervisorNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      try {
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage quota errors
+      }
+      return updated;
+    });
 
     // Update active hazard count for that quadrant
     setQuadrants(prev => prev.map(q => {
@@ -275,6 +353,30 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }));
   };
 
+  const markNotificationRead = (notificationId: string) => {
+    setSupervisorNotifications(prev => {
+      const updated = prev.map(n => (n.id === notificationId ? { ...n, read: true } : n));
+      try {
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage quota errors
+      }
+      return updated;
+    });
+  };
+
+  const markAllNotificationsRead = () => {
+    setSupervisorNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      try {
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage quota errors
+      }
+      return updated;
+    });
+  };
+
   return (
     <PlantContext.Provider value={{
       currentUser,
@@ -294,7 +396,10 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       updateWorkOrderStatus,
       recordBulletinRead,
       createBulletin,
-      completeInspection
+      completeInspection,
+      supervisorNotifications,
+      markNotificationRead,
+      markAllNotificationsRead
     }}>
       {children}
     </PlantContext.Provider>
