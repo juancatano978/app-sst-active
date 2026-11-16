@@ -25,7 +25,8 @@ const MODULE_LABELS: Record<ModuleId, string> = {
   inspecciones: 'Inspecciones',
   legal: 'Legal y FURAT',
   boletines: 'Boletines RFID',
-  presupuesto: 'Presupuesto / SMMLV'
+  presupuesto: 'Presupuesto / SMMLV',
+  database: 'Base de Datos (Sheets)'
 };
 
 export const LoginScreen: React.FC = () => {

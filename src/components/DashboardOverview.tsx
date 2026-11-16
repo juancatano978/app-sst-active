@@ -21,7 +21,8 @@ import {
   AlertOctagon,
   Wrench,
   Radio,
-  CreditCard
+  CreditCard,
+  Database
 } from 'lucide-react';
 
 interface DashboardOverviewProps {
@@ -29,7 +30,7 @@ interface DashboardOverviewProps {
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onSelectModule }) => {
-  const { currentUser, quadrants, incidents, workers } = usePlant();
+  const { currentUser, quadrants, incidents, workers, linkedSpreadsheetId, pendingSheetChanges } = usePlant();
   const allowedModules = currentUser?.allowedModules || ['dashboard'];
 
   const totalIncidents = incidents.length;
@@ -116,6 +117,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onSelectMo
       color: 'emerald',
       badge: 'Compuerta 1 SMMLV',
       stat: 'Límite $1.423.500 COP'
+    },
+    {
+      id: 'database',
+      name: 'Base de Datos (Google Sheets)',
+      channel: 'Motor Relacional 6 Tablas + KPI',
+      desc: 'Esquema relacional PK/FK en Google Sheets con fórmulas nativas, auditoría de integridad referencial y sincronización bidireccional.',
+      icon: Database,
+      color: 'sky',
+      badge: 'Google Sheets DB',
+      stat: linkedSpreadsheetId
+        ? pendingSheetChanges > 0
+          ? `${pendingSheetChanges} cambio(s) pendiente(s)`
+          : 'Hoja vinculada y al día'
+        : 'Sin hoja vinculada'
     }
   ];
 

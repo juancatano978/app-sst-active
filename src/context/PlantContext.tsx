@@ -19,6 +19,7 @@ import {
   SMMLV_PARAM
 } from '../data/plantOpsStore';
 import { getSystemTimestamp, getSystemDateOnly } from '../utils/dateUtils';
+import type { PlantDatabaseSnapshot } from '../services/googleSheetsDb';
 
 interface PlantContextType {
   currentUser: PlantUserProfile | null;
@@ -59,12 +60,27 @@ interface PlantContextType {
   supervisorNotifications: SupervisorNotification[];
   markNotificationRead: (notificationId: string) => void;
   markAllNotificationsRead: () => void;
+  linkedSpreadsheetId: string;
+  setLinkedSpreadsheetId: (id: string) => void;
+  pendingSheetChanges: number;
+  lastSheetSyncAt: string | null;
+  markSheetSynced: (timestamp?: string) => void;
+  hydrateDatabaseFromSheets: (snapshot: Partial<PlantDatabaseSnapshot>) => void;
 }
 
 const PlantContext = createContext<PlantContextType | undefined>(undefined);
 
 const NOTIF_STORAGE_KEY = 'sst_active_supervisor_notifications_v1';
 const INCIDENTS_STORAGE_KEY = 'sst_active_totem_incidents_v1';
+const LINKED_SHEET_KEY = 'sst_active_linked_sheet_id_v1';
+
+const loadStoredSheetId = (): string => {
+  try {
+    return localStorage.getItem(LINKED_SHEET_KEY) || '';
+  } catch {
+    return '';
+  }
+};
 
 const loadStoredNotifications = (): SupervisorNotification[] => {
   try {
@@ -97,6 +113,27 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [bulletins, setBulletins] = useState<SafetyBulletinItem[]>(INITIAL_BULLETINS);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string>('RAD-2026-088192');
   const [supervisorNotifications, setSupervisorNotifications] = useState<SupervisorNotification[]>(loadStoredNotifications);
+  const [linkedSpreadsheetId, setLinkedSpreadsheetIdState] = useState<string>(loadStoredSheetId);
+  const [pendingSheetChanges, setPendingSheetChanges] = useState<number>(0);
+  const [lastSheetSyncAt, setLastSheetSyncAt] = useState<string | null>(null);
+
+  const setLinkedSpreadsheetId = (id: string) => {
+    setLinkedSpreadsheetIdState(id);
+    try {
+      if (id) {
+        localStorage.setItem(LINKED_SHEET_KEY, id);
+      } else {
+        localStorage.removeItem(LINKED_SHEET_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const markSheetSynced = (timestamp?: string) => {
+    setPendingSheetChanges(0);
+    setLastSheetSyncAt(timestamp || getSystemTimestamp());
+  };
 
   useEffect(() => {
     const handleStorageSync = (e: StorageEvent) => {
@@ -197,6 +234,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return q;
     }));
+    setPendingSheetChanges(prev => prev + 1);
 
     return newIncident;
   };
@@ -228,6 +266,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return q;
       }));
     }
+    setPendingSheetChanges(prev => prev + 1);
   };
 
   const assignEPPToWorker = (workerId: string, gearItem: { name: string; serial: string }): boolean => {
@@ -256,6 +295,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return w;
     }));
+    setPendingSheetChanges(prev => prev + 1);
 
     return true;
   };
@@ -281,6 +321,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return inc;
     }));
+    setPendingSheetChanges(prev => prev + 1);
   };
 
   const recordBulletinRead = (bulletinId: string, carnet?: string) => {
@@ -298,6 +339,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return b;
     }));
+    setPendingSheetChanges(prev => prev + 1);
   };
 
   const createBulletin = (data: {
@@ -335,6 +377,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     setBulletins(prev => [newBulletin, ...prev]);
+    setPendingSheetChanges(prev => prev + 1);
     return newBulletin;
   };
 
@@ -351,6 +394,7 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       return ins;
     }));
+    setPendingSheetChanges(prev => prev + 1);
   };
 
   const markNotificationRead = (notificationId: string) => {
@@ -377,6 +421,35 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
   };
 
+  const hydrateDatabaseFromSheets = (snapshot: Partial<PlantDatabaseSnapshot>) => {
+    if (snapshot.incidents && snapshot.incidents.length > 0) {
+      setIncidents(snapshot.incidents);
+      try {
+        localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(snapshot.incidents));
+      } catch {
+        // ignore storage quota
+      }
+    }
+    if (snapshot.workers && snapshot.workers.length > 0) {
+      setWorkers(snapshot.workers);
+    }
+    if (snapshot.inspections && snapshot.inspections.length > 0) {
+      setInspections(snapshot.inspections);
+    }
+    if (snapshot.bulletins && snapshot.bulletins.length > 0) {
+      setBulletins(snapshot.bulletins);
+    }
+    if (snapshot.notifications) {
+      setSupervisorNotifications(snapshot.notifications);
+      try {
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(snapshot.notifications));
+      } catch {
+        // ignore storage quota
+      }
+    }
+    markSheetSynced();
+  };
+
   return (
     <PlantContext.Provider value={{
       currentUser,
@@ -399,7 +472,13 @@ export const PlantProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       completeInspection,
       supervisorNotifications,
       markNotificationRead,
-      markAllNotificationsRead
+      markAllNotificationsRead,
+      linkedSpreadsheetId,
+      setLinkedSpreadsheetId,
+      pendingSheetChanges,
+      lastSheetSyncAt,
+      markSheetSynced,
+      hydrateDatabaseFromSheets
     }}>
       {children}
     </PlantContext.Provider>

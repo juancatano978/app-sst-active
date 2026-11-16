@@ -114,7 +114,8 @@ export type ModuleId =
   | 'inspecciones'
   | 'legal'
   | 'boletines'
-  | 'presupuesto';
+  | 'presupuesto'
+  | 'database';
 
 export type UserRole =
   | 'OPERARIO'

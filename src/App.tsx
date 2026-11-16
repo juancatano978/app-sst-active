@@ -12,6 +12,7 @@ import { TriajeGtc45 } from './components/operations/TriajeGtc45';
 import { BuzonConfidencial } from './components/operations/BuzonConfidencial';
 import { ControlAlturasEPP } from './components/operations/ControlAlturasEPP';
 import { PresupuestoReparaciones } from './components/operations/PresupuestoReparaciones';
+import { GoogleSheetsDatabase } from './components/operations/GoogleSheetsDatabase';
 
 // Regulatory & Communication Modules
 import { Hu004LegalNotification } from './components/mockups/Hu004LegalNotification';
@@ -26,6 +27,7 @@ import {
   ClipboardCheck, 
   Megaphone, 
   Banknote,
+  Database,
   LayoutDashboard,
   ArrowLeft,
   BellRing,
@@ -107,6 +109,11 @@ function AppContent() {
       title: 'Gestión Presupuestal y Compuerta Financiera de Reparaciones',
       subtitle: 'Límite de aprobación autónoma de 1 SMMLV ($1.423.500 COP) para SST y derivación a Gerencia General.',
       channel: 'Consola Gerencial'
+    },
+    database: {
+      title: 'Base de Datos Relacional en Google Sheets',
+      subtitle: 'Motor multi-tabla (PK/FK) con fórmulas nativas KPI, auditoría de integridad referencial y sincronización bidireccional.',
+      channel: 'Consola Web / PC'
     }
   };
 
@@ -118,7 +125,8 @@ function AppContent() {
     { id: 'inspecciones', label: 'Inspecciones', icon: ClipboardCheck },
     { id: 'legal', label: 'Legal y FURAT', icon: FileText },
     { id: 'boletines', label: 'Boletines', icon: Megaphone },
-    { id: 'presupuesto', label: 'Presupuesto', icon: Banknote }
+    { id: 'presupuesto', label: 'Presupuesto', icon: Banknote },
+    { id: 'database', label: 'Base de Datos (Sheets)', icon: Database }
   ];
 
   const visibleTabs = navTabs.filter(tab => allowed.includes(tab.id));
@@ -143,6 +151,8 @@ function AppContent() {
         return <Hu007SafetyBulletins />;
       case 'presupuesto': 
         return <PresupuestoReparaciones />;
+      case 'database':
+        return <GoogleSheetsDatabase />;
       default: 
         return <DashboardOverview onSelectModule={setActiveModule} />;
     }

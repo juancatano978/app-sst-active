@@ -23,7 +23,7 @@ export const PLANT_USERS: PlantUserProfile[] = [
     turno: 'Turno Campo / Administrativo',
     role: 'SUPERVISOR_HSEQ',
     roleLabel: 'Supervisor HSEQ / SST',
-    allowedModules: ['dashboard', 'totem', 'triaje', 'inspecciones', 'legal', 'boletines', 'presupuesto']
+    allowedModules: ['dashboard', 'totem', 'triaje', 'inspecciones', 'legal', 'boletines', 'presupuesto', 'database']
   },
   {
     id: 'USR-03',
@@ -47,7 +47,7 @@ export const PLANT_USERS: PlantUserProfile[] = [
     turno: 'Consola Gerencial',
     role: 'GERENCIA',
     roleLabel: 'Gerencia General',
-    allowedModules: ['dashboard', 'presupuesto', 'legal', 'inspecciones', 'boletines']
+    allowedModules: ['dashboard', 'presupuesto', 'legal', 'inspecciones', 'boletines', 'database']
   }
 ];
 
